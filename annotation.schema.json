@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/face-annotation-project/annotation.schema.json",
+  "title": "人脸标注数据格式规范",
+  "description": "本项目人脸标注数据的标准 JSON Schema，定义自动标注与人工审核标注的统一数据格式。",
+  "type": "object",
+  "required": ["image_path", "bbox", "landmarks", "annotator", "date"],
+  "properties": {
+    "image_path": {
+      "type": "string",
+      "description": "被标注图片的相对路径（以项目根目录为基准，使用正斜杠分隔）",
+      "examples": ["web_app/uploads/4a948fbcca8a.jpg", "dataset/raw_images/温惠锦/001.jpg"]
+    },
+    "bbox": {
+      "$ref": "#/$defs/bbox",
+      "description": "人脸边界框，定位人脸在图片中的矩形区域"
+    },
+    "landmarks": {
+      "$ref": "#/$defs/landmarks",
+      "description": "人脸关键点坐标，包含5个简化关键点"
+    },
+    "annotator": {
+      "type": "string",
+      "enum": ["auto", "auto_partial", "manual"],
+      "description": "标注者标识：auto=自动标注(全部成功)，auto_partial=自动标注(关键点提取失败)，manual=人工修正审核"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "标注日期，格式为 YYYY-MM-DD",
+      "examples": ["2026-06-24"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "人脸检测置信度（由 MediaPipe 输出，0-1 之间）"
+    },
+    "quality": {
+      "type": "object",
+      "description": "图片质量评估结果（由 QualityFilter 模块生成）",
+      "properties": {
+        "quality_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "综合质量评分（越高越好）"
+        },
+        "quality_label": {
+          "type": "string",
+          "enum": ["good", "acceptable", "poor"],
+          "description": "质量等级：good(≥0.7), acceptable(0.4-0.7), poor(<0.4)"
+        },
+        "blur_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "模糊度评分"
+        },
+        "brightness_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "亮度评分"
+        },
+        "pose_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "姿态评分"
+        },
+        "details": {
+          "type": "object",
+          "description": "各维度的详细检测数据"
+        }
+      }
+    },
+    "reviewer": {
+      "type": "string",
+      "description": "审核者标识（仅人工修正后存在）"
+    },
+    "reviewed_from": {
+      "type": "string",
+      "enum": ["auto", "auto_partial"],
+      "description": "原始标注来源（仅人工修正后存在）"
+    },
+    "modifications": {
+      "type": "array",
+      "description": "修改记录列表（仅人工修正后存在）",
+      "items": {
+        "$ref": "#/$defs/modification"
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "bbox": {
+      "type": "object",
+      "title": "人脸边界框",
+      "description": "以像素为单位的矩形人脸区域，坐标系原点为图片左上角，x 向右为正，y 向下为正",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "边界框左上角 x 坐标（像素）"
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "边界框左上角 y 坐标（像素）"
+        },
+        "width": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "description": "边界框宽度（像素），必须大于 0"
+        },
+        "height": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "description": "边界框高度（像素），必须大于 0"
+        }
+      },
+      "additionalProperties": false
+    },
+    "landmarks": {
+      "type": "object",
+      "title": "人脸关键点",
+      "description": "5个简化人脸关键点，每个关键点为 [x, y] 整数坐标对。坐标原点为图片左上角。关键点提取失败时允许值为 [-1, -1]（哨兵值，表示 partial 标注）。左/右均采用观察者视角（看图片的人的左右，非被拍摄者自身的左右）。",
+      "required": [
+        "left_eye",
+        "right_eye",
+        "nose_tip",
+        "left_mouth_corner",
+        "right_mouth_corner"
+      ],
+      "properties": {
+        "left_eye": {
+          "$ref": "#/$defs/point2d",
+          "description": "左眼中心坐标（观察者视角），取 MediaPipe 眼周8个关键点的几何均值"
+        },
+        "right_eye": {
+          "$ref": "#/$defs/point2d",
+          "description": "右眼中心坐标（观察者视角），取 MediaPipe 眼周8个关键点的几何均值"
+        },
+        "nose_tip": {
+          "$ref": "#/$defs/point2d",
+          "description": "鼻尖坐标，对应 MediaPipe 关键点索引 #1"
+        },
+        "left_mouth_corner": {
+          "$ref": "#/$defs/point2d",
+          "description": "左嘴角坐标（观察者视角），对应 MediaPipe 关键点索引 #61"
+        },
+        "right_mouth_corner": {
+          "$ref": "#/$defs/point2d",
+          "description": "右嘴角坐标（观察者视角），对应 MediaPipe 关键点索引 #291"
+        }
+      },
+      "additionalProperties": false
+    },
+    "point2d": {
+      "type": "array",
+      "title": "二维坐标点",
+      "description": "[x, y] 像素坐标对。允许 [-1, -1] 作为 partial 标注的哨兵值",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer"
+      },
+      "oneOf": [
+        {
+          "description": "有效坐标：x ≥ 0 且 y ≥ 0",
+          "items": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "integer", "minimum": 0 }
+          ]
+        },
+        {
+          "description": "无效坐标哨兵值（partial 标注）",
+          "items": [
+            { "type": "integer", "const": -1 },
+            { "type": "integer", "const": -1 }
+          ]
+        }
+      ]
+    },
+    "modification": {
+      "type": "object",
+      "title": "修改记录",
+      "description": "人工审核时对标注字段的单次修改记录",
+      "required": ["field", "old", "new"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "被修改的字段路径，如 'bbox.x'、'landmarks.left_eye'"
+        },
+        "old": {
+          "description": "修改前的值"
+        },
+        "new": {
+          "description": "修改后的值"
+        }
+      }
+    }
+  }
+}

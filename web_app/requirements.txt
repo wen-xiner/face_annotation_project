@@ -1,0 +1,20 @@
+# 人脸标注工具 Web 界面 — Python 依赖
+# Python 版本要求: >= 3.9
+
+# Web 框架
+fastapi>=0.110.0,<1.0.0
+uvicorn[standard]>=0.29.0
+
+# 模板引擎
+jinja2>=3.1.0
+
+# 文件上传
+python-multipart>=0.0.9
+
+# 图像处理（复用项目依赖）
+opencv-python>=4.8.0,<5.0.0
+mediapipe>=0.10.0,<0.11.0
+numpy>=1.24.0,<2.0.0
+
+# 进度条
+tqdm>=4.65.0

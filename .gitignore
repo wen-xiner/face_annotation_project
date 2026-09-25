@@ -1,0 +1,33 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.Python
+.venv/
+venv/
+env/
+
+# ===== 环境/密钥 =====
+.env
+.env.local
+*.local
+
+# ===== 运行时上传与标注输出（产物，不入库） =====
+web_app/uploads/
+output/
+
+# ===== 含人脸画面（隐私，不入库） =====
+dataset/raw_images/
+项目截图/
+
+# ===== 项目归档副本与压缩包（与外层重复 / 超 GitHub 100M 单文件限制） =====
+人工智能工程师考证1班+第5组/
+*.zip
+
+# ===== 系统/编辑器 =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.workbuddy/

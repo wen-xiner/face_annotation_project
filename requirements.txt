@@ -1,0 +1,14 @@
+# 人脸识别数据集标注规范设计 -- Python 依赖
+# Python 版本要求: >= 3.9
+
+# 图像处理
+opencv-python>=4.8.0,<5.0.0
+
+# 人脸检测与关键点提取
+mediapipe>=0.10.0,<0.11.0
+
+# 数值计算（mediapipe 依赖）
+numpy>=1.24.0,<2.0.0
+
+# 进度条（batch_processor 可选依赖）
+tqdm>=4.65.0

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<!--
+  文件名: index.html
+  功能: FaceAnnotator v2.0 — 上传 / 拍照 / 标注 / 识别 / 自动命名
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FaceAnnotator v2.0 — Precision Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css?v=3.1">
+</head>
+<body>
+
+  <!-- ========== Header ========== -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <span class="logo-icon">&#9672;</span>
+        <span class="logo-text">FaceAnnotator</span>
+        <span class="logo-version">v2.0</span>
+      </a>
+      <nav class="header-nav">
+        <button id="btn-camera" class="nav-link nav-link--accent" title="打开摄像头拍照">
+          <span>&#128247;</span> 拍照
+        </button>
+        <button id="btn-clear-all" class="nav-link nav-link--danger" title="清空">
+          <span>&#10005;</span> 清空
+        </button>
+        <button id="btn-shutdown" class="nav-link nav-link--shutdown" title="退出系统">
+          <span>&#9166;</span> 退出
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== Main ========== -->
+  <main class="main-layout">
+
+    <!-- ===== 左侧面板 ===== -->
+    <aside class="panel panel--left">
+
+      <!-- 上传区 -->
+      <section class="card card--upload" id="upload-section">
+        <div class="upload-zone" id="upload-zone">
+          <div class="upload-zone__icon" id="upload-icon">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+              <circle cx="18" cy="18" r="16" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"/>
+              <circle cx="18" cy="18" r="4" fill="currentColor" opacity="0.6"/>
+            </svg>
+          </div>
+          <p class="upload-zone__title">拖拽图片到此处</p>
+          <p class="upload-zone__subtitle">—— 或点击选择 ——</p>
+          <p class="upload-zone__hint">JPG / PNG / BMP / TIFF / WEBP</p>
+          <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.bmp,.tiff,.tif,.webp" multiple hidden>
+        </div>
+      </section>
+
+      <!-- 文件列表 -->
+      <section class="card card--files" id="file-list-section">
+        <div class="card__header">
+          <h3 class="card__title">文件列表 <span class="card__count" id="file-count">0</span></h3>
+          <span class="card__summary" id="file-summary"></span>
+        </div>
+        <div class="file-list" id="file-list">
+          <div class="file-list__empty" id="file-list-empty">
+            <span class="file-list__empty-icon">&#9684;</span>
+            <p>暂无文件，拖拽 / 点击 / 拍照上传</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 操作区 -->
+      <section class="card card--actions">
+        <button id="btn-annotate-all" class="btn btn--primary btn--full" disabled>
+          <span class="btn__icon">&#9678;</span> 全部标注 + 识别
+        </button>
+        <div class="action-row">
+          <button id="btn-clean-all" class="btn btn--ghost btn--sm" disabled title="双边滤波+CLAHE增强">
+            &#9733; 全部清洗
+          </button>
+          <button id="btn-correct-all" class="btn btn--ghost btn--sm" disabled title="自动纠错关键点">
+            &#9741; 全部纠错
+          </button>
+        </div>
+        <button id="btn-download-all" class="btn btn--secondary btn--full" disabled>
+          <span class="btn__icon">&#8681;</span> 批量下载 ZIP
+        </button>
+      </section>
+
+      <!-- URL 导入 -->
+      <section class="card card--import">
+        <div class="card__header">
+          <h3 class="card__title">&#8681; URL 导入</h3>
+        </div>
+        <div class="import-row">
+          <input type="text" id="import-url" class="input--url" placeholder="输入图片URL...">
+          <button id="btn-import-url" class="btn btn--ghost btn--sm">导入</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ===== 右侧预览 ===== -->
+    <section class="panel panel--right">
+      <div class="card card--preview" id="preview-section">
+        <div class="preview-toolbar" id="preview-toolbar">
+          <div class="toolbar-left">
+            <span class="toolbar-label" id="toolbar-filename">预览</span>
+            <span class="toolbar-person" id="toolbar-person"></span>
+          </div>
+          <div class="toolbar-right">
+            <button class="toolbar-btn" id="btn-zoom-out" title="缩小">&#8854;</button>
+            <span class="toolbar-zoom-text" id="zoom-text">100%</span>
+            <button class="toolbar-btn" id="btn-zoom-in" title="放大">&#8853;</button>
+            <button class="toolbar-btn" id="btn-zoom-fit" title="适应">&#8999;</button>
+            <span class="toolbar-sep"></span>
+            <div class="toolbar-dropdown" id="dropdown-export">
+              <button class="toolbar-btn toolbar-btn--text" id="btn-export-toggle">&#8681; 导出 <span class="dropdown-arrow">&#9660;</span></button>
+              <div class="toolbar-dropdown__menu" id="export-menu" style="display:none;">
+                <button class="toolbar-dropdown__item" data-format="json">JSON 标注</button>
+                <button class="toolbar-dropdown__item" data-format="coco">COCO JSON</button>
+                <button class="toolbar-dropdown__item" data-format="yolo">YOLO txt</button>
+                <button class="toolbar-dropdown__item" data-format="voc">Pascal VOC XML</button>
+                <button class="toolbar-dropdown__item" data-format="csv">CSV 表格</button>
+                <hr class="dropdown-sep">
+                <button class="toolbar-dropdown__item" data-format="json-all">全部 JSON (ZIP)</button>
+                <button class="toolbar-dropdown__item" data-format="coco-all">全部 COCO</button>
+                <button class="toolbar-dropdown__item" data-format="yolo-all">全部 YOLO (ZIP)</button>
+                <button class="toolbar-dropdown__item" data-format="voc-all">全部 VOC (ZIP)</button>
+                <button class="toolbar-dropdown__item" data-format="csv-all">全部 CSV</button>
+              </div>
+            </div>
+            <button class="toolbar-btn toolbar-btn--text" id="btn-download-viz">&#8681; 图片</button>
+          </div>
+        </div>
+        <div class="preview-dual" id="preview-dual">
+          <div class="preview-pane" id="pane-original">
+            <div class="preview-pane__header"><span class="preview-pane__label">原图</span></div>
+            <div class="preview-pane__body">
+              <img id="img-original" class="preview-pane__img" src="" alt="" style="display:none;">
+              <div class="preview-pane__placeholder" id="placeholder-original">
+                <span class="preview-pane__placeholder-icon">&#9672;</span>
+                <p>上传图片后显示</p>
+              </div>
+            </div>
+          </div>
+          <div class="preview-pane" id="pane-annotated">
+            <div class="preview-pane__header">
+              <span class="preview-pane__label">标注图</span>
+              <span class="preview-pane__badge" id="annotated-badge" style="display:none;"></span>
+            </div>
+            <div class="preview-pane__body">
+              <img id="img-annotated" class="preview-pane__img" src="" alt="" style="display:none;">
+              <div class="preview-pane__placeholder" id="placeholder-annotated">
+                <span class="preview-pane__placeholder-icon">&#9672;</span>
+                <p>执行标注后显示</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 标注数据 -->
+      <div class="card card--data" id="data-panel" style="display:none;">
+        <div class="card__header">
+          <h3 class="card__title">&#9776; 标注数据</h3>
+          <div class="card__header-actions">
+            <span class="badge" id="data-badge"></span>
+            <button class="btn btn--ghost btn--sm" id="btn-quality" style="display:none;">&#9733; 质量评估</button>
+            <button class="btn btn--ghost btn--sm" id="btn-validate" style="display:none;">&#9741; 一键校验</button>
+            <button class="btn btn--ghost btn--sm" id="btn-quality-report" style="display:none;">&#9776; 质量报告</button>
+            <button class="btn btn--ghost btn--sm" id="btn-correct" style="display:none;">&#9741; 纠错</button>
+          </div>
+        </div>
+        <div class="validation-result" id="validation-result" style="display:none;"></div>
+        <div class="quality-badge" id="quality-badge" style="display:none;"></div>
+        <div class="data-grid" id="data-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========== 摄像头对话框 ========== -->
+  <div class="modal-overlay" id="modal-camera" style="display:none;">
+    <div class="modal-card modal-card--camera">
+      <div class="modal-card__header">
+        <span id="camera-title">&#128247; 拍照</span>
+        <span id="camera-rec-indicator" class="rec-indicator" style="display:none;">&#9679; 录制中</span>
+        <button class="modal-close" id="camera-close">&times;</button>
+      </div>
+      <div class="camera-container" id="camera-container">
+        <video id="camera-video" autoplay playsinline muted></video>
+        <canvas id="camera-canvas" style="display:none;"></canvas>
+        <canvas id="camera-overlay" style="display:none;"></canvas>
+        <div class="camera-error" id="camera-error" style="display:none;">
+          <p>&#9888; 无法访问摄像头</p>
+          <p class="camera-error__hint">请检查浏览器权限设置</p>
+        </div>
+      </div>
+      <div class="camera-actions">
+        <button class="btn btn--ghost" id="camera-cancel">取消</button>
+        <button class="btn btn--primary" id="camera-capture" disabled>&#128247; 拍照</button>
+        <button class="btn btn--accent" id="camera-record" disabled style="display:none;">&#9654; 开始录像</button>
+        <button class="btn btn--danger" id="camera-stop-record" style="display:none;">&#9632; 停止录像</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 人物命名对话框 ========== -->
+  <div class="modal-overlay" id="modal-name" style="display:none;">
+    <div class="modal-card modal-card--name">
+      <div class="modal-card__header">
+        <span>&#128100; 发现新面孔！</span>
+      </div>
+      <div class="name-prompt">
+        <p class="name-prompt__desc">此人物尚未命名，请输入姓名以便后续自动归类：</p>
+        <div class="name-prompt__preview">
+          <img id="name-preview-img" src="" alt="">
+        </div>
+        <input type="text" class="name-input" id="name-input"
+               placeholder="输入姓名（如：张三）" maxlength="30" autofocus>
+        <p class="name-prompt__hint" id="name-hint"></p>
+      </div>
+      <div class="name-actions">
+        <button class="btn btn--ghost" id="name-skip">跳过</button>
+        <button class="btn btn--primary" id="name-confirm" disabled>确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- 确认对话框 -->
+  <div class="modal-overlay" id="modal-confirm" style="display:none;">
+    <div class="modal-card">
+      <p class="modal-text" id="modal-text"></p>
+      <div class="modal-actions">
+        <button class="btn btn--ghost" id="modal-cancel">取消</button>
+        <button class="btn btn--danger" id="modal-confirm-btn">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/main.js?v=3.1"></script>
+</body>
+</html>
